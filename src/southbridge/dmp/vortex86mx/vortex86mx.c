@@ -6,6 +6,9 @@
 #include <pc80/keyboard.h>
 #include <pc80/i8259.h>
 #include "chip.h"
+#include "vortex86mx.h"
+
+// TODO: Add FCDC 8051 firmware downloading control
 
 static void keyboard_on(struct device *dev)
 {
@@ -32,37 +35,61 @@ void dump_south(device_t dev0)
 		printk(BIOS_DEBUG, "\n");
 	}
 }
-
-void set_led(void)
-{
-	// set power led to steady now that coreboot has virtually done its job
-	device_t dev;
-	dev = dev_find_device(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8235, 0);
-	pci_write_config8(dev, 0x94, 0xb0);
-}
 #endif
 
-static void vt8235_enable(struct device *dev)
+// TODO: add LPC SERVO SPI Init
+// Check Chip ID
+
+static void vortex86mx_sb_enable(struct device *dev)
 {
-	u8 regval;
-	u16 vendor,model;
+	unsigned char c;
+	u16 vendor, model;
 
-	vendor = pci_read_config16(dev,0);
-	model = pci_read_config16(dev,0x2);
+	vendor = pci_read_config16(dev, 0);
+	model = pci_read_config16(dev, 0x2);
 
-	printk(BIOS_DEBUG, "In vt8235_enable %04x %04x.\n",vendor,model);
+	printk(BIOS_DEBUG, "In vortex86mx_sb_enable %04x %04x.\n", vendor, model);
 
 	/* If this is not the southbridge itself just return.
-	 * This is necessary because USB devices are slot 10, whereas this
-	 * device is slot 11 therefore usb devices get called first during
-	 * the bus scan. We don't want to wait until we could do dev->init
-	 * because that's too late.
 	 */
 
-	if( (vendor != PCI_VENDOR_ID_VIA) || (model != PCI_DEVICE_ID_VIA_8235))
+	if( (vendor != PCI_VENDOR_ID_DMP) || (model != PCI_DEVICE_ID_VORTEX86MX_SB))
 		return;
 
 	printk(BIOS_DEBUG, "Initialising Devices\n");
+
+	pci_write_config8(dev, SB_REG_INTUART_CTL, 0);
+	c = pci_read_config8(dev, SB_REG_LADR);
+	c |= 0x10;
+	pci_write_config8(dev, SB_REG_LADR, c);
+	c = pci_read_config8(dev, SB_REG_BSCR);
+	c |= 0xee;
+	pci_write_config8(dev, SB_REG_BSCR, c);
+	c = pci_read_config8(dev, 0x5d);
+	c |= 0x4e;
+	pci_write_config8(dev, 0x5d, c);
+	c = pci_read_config8(dev, 0xc3); // SB_REG_IPFCR???
+	c |= 0x3;
+	pci_write_config8(dev, 0xc3, c);
+	c = pci_read_config8(dev, 0xc2);
+	c |= 0x2d;
+	pci_write_config8(dev, 0xc2, c);
+	c = pci_read_config8(dev, SB_REG_SERIRQ_CTRL);
+	c |= 0xd2;
+	pci_write_config8(dev, SB_REG_SERIRQ_CTRL, c);
+	c = pci_read_config8(dev, SB_REG_LPC_CNT);
+	c &= ~0xf8;
+	c |= 0x5;
+	pci_write_config8(dev, SB_REG_LPC_CNT, c);
+	c = pci_read_config8(dev, SB_REG_INUART_CTL);
+	c |= 0xa0;
+	pci_write_config8(dev, SB_REG_INUART_CTL, c);
+	c = pci_read_config8(dev, SB_REG_LPC_CR);
+	c |= 0x16;
+	pci_write_config8(dev, SB_REG_LPC_CR, c);
+	c = pci_read_config8(dev, 0x4d);
+	c |= 0xff;
+	pci_write_config8(dev, 0x4d, c);
 
 	/* make sure interupt controller is configured before keyboard init */
 	setup_i8259();
@@ -83,7 +110,7 @@ static void vt8235_enable(struct device *dev)
 	pci_write_config8(dev, 0x50, regval);
 }
 
-struct chip_operations southbridge_via_vt8235_ops = {
-	CHIP_NAME("VIA VT8235 Southbridge")
-	.enable_dev = vt8235_enable,
+struct chip_operations southbridge_dmp_vortex86mx_ops = {
+	CHIP_NAME("DMP Vortex86MX Southbridge")
+	.enable_dev = vortex86mx_sb_enable,
 };

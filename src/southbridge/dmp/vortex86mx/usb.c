@@ -9,7 +9,7 @@
 
 static void usb_init(struct device *dev)
 {
-	printk(BIOS_DEBUG, "Configuring VIA USB 1.1\n");
+	printk(BIOS_DEBUG, "Configuring DMP Vortex86MX USB 2.0\n");
 
 	/* pci_write_config8(dev, 0x04, 0x07); */
 
@@ -38,7 +38,7 @@ static struct device_operations usb_ops = {
 
 static const struct pci_driver northbridge_driver __pci_driver = {
 	.ops    = &usb_ops,
-	.vendor = PCI_VENDOR_ID_VIA,
-	.device = PCI_DEVICE_ID_VIA_82C586_2,
+	.vendor = PCI_VENDOR_ID_DMP,
+	.device = PCI_DEVICE_ID_VORTEX86MX_USB,
 };
 

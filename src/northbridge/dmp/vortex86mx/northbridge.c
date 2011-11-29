@@ -105,7 +105,7 @@ static void pci_domain_set_resources(device_t dev)
 	device_t mc_dev;
         uint32_t pci_tolm;
 
-	printk(BIOS_SPEW, "Entering vt8623 pci_domain_set_resources.\n");
+	printk(BIOS_SPEW, "Entering vortex86mx pci_domain_set_resources.\n");
 
         pci_tolm = find_pci_tolm(dev->link_list);
 	mc_dev = dev->link_list->children;
@@ -181,7 +181,7 @@ static struct device_operations cpu_bus_ops = {
 
 static void enable_dev(struct device *dev)
 {
-	printk(BIOS_SPEW, "In vt8623 enable_dev for device %s.\n", dev_path(dev));
+	printk(BIOS_SPEW, "In vortex86mx enable_dev for device %s.\n", dev_path(dev));
 
         /* Set the operations if it is a special bus type */
         if (dev->path.type == DEVICE_PATH_PCI_DOMAIN) {
@@ -193,7 +193,7 @@ static void enable_dev(struct device *dev)
         }
 }
 
-struct chip_operations northbridge_via_vt8623_ops = {
-	CHIP_NAME("VIA VT8623 Northbridge")
+struct chip_operations northbridge_dmp_vortex86mx_ops = {
+	CHIP_NAME("DMP Vortex86MX Northbridge")
 	.enable_dev = enable_dev,
 };
