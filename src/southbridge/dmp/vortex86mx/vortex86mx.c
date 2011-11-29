@@ -46,7 +46,7 @@ static void vortex86mx_sb_enable(struct device *dev)
 	u16 vendor, model;
 
 	vendor = pci_read_config16(dev, 0);
-	model = pci_read_config16(dev, 0x2);
+	model = pci_read_config16(dev, 0x2); // must be 0x6063
 
 	printk(BIOS_DEBUG, "In vortex86mx_sb_enable %04x %04x.\n", vendor, model);
 
@@ -58,38 +58,53 @@ static void vortex86mx_sb_enable(struct device *dev)
 
 	printk(BIOS_DEBUG, "Initialising Devices\n");
 
-	pci_write_config8(dev, SB_REG_INTUART_CTL, 0);
+	pci_write_config8(dev, SB_REG_INTUART_CTRL, 0);
 	c = pci_read_config8(dev, SB_REG_LADR);
 	c |= 0x10;
 	pci_write_config8(dev, SB_REG_LADR, c);
+
+	/* Undocumented register */
 	c = pci_read_config8(dev, SB_REG_BSCR);
 	c |= 0xee;
 	pci_write_config8(dev, SB_REG_BSCR, c);
-	c = pci_read_config8(dev, 0x5d);
+	c = pci_read_config8(dev, SB_REG_BSCR + 1);
 	c |= 0x4e;
-	pci_write_config8(dev, 0x5d, c);
-	c = pci_read_config8(dev, 0xc3); // SB_REG_IPFCR???
+	pci_write_config8(dev, SB_REG_BSCR + 1, c);
+	
+	/* SB Internal Peripheral Feature Control Register:
+	[24-25] Set 4 clock for ISA 8bits I/O cycle wait-state */
+	c = pci_read_config8(dev, 0xc3);
 	c |= 0x3;
 	pci_write_config8(dev, 0xc3, c);
+
+	/* SB Internal Peripheral Feature Control Register:
+	[16]  Enable read/write internal IO zero  wait state
+	[18-19] Set 4 clock for ISA 8bits Memory cycle wait-state
+	[21] Set 1 clock for ISA 16bits Memory cycle wait-state */
 	c = pci_read_config8(dev, 0xc2);
 	c |= 0x2d;
 	pci_write_config8(dev, 0xc2, c);
+
 	c = pci_read_config8(dev, SB_REG_SERIRQ_CTRL);
 	c |= 0xd2;
 	pci_write_config8(dev, SB_REG_SERIRQ_CTRL, c);
-	c = pci_read_config8(dev, SB_REG_LPC_CNT);
+
+	/* Enable LPC function, enable Serial IRQ mode repetition */
+	c = pci_read_config8(dev, SB_REG_LPC_CTRL);
 	c &= ~0xf8;
 	c |= 0x5;
-	pci_write_config8(dev, SB_REG_LPC_CNT, c);
-	c = pci_read_config8(dev, SB_REG_INUART_CTL);
+	pci_write_config8(dev, SB_REG_LPC_CTRL, c);
+	c = pci_read_config8(dev, SB_REG_INUART_CTRL);
 	c |= 0xa0;
-	pci_write_config8(dev, SB_REG_INUART_CTL, c);
-	c = pci_read_config8(dev, SB_REG_LPC_CR);
+	pci_write_config8(dev, SB_REG_INUART_CTRL, c);
+	
+	/* SMM Base Address Control Register */
+	c = pci_read_config8(dev, SB_REG_SMM_BAR);
 	c |= 0x16;
-	pci_write_config8(dev, SB_REG_LPC_CR, c);
-	c = pci_read_config8(dev, 0x4d);
+	pci_write_config8(dev, SB_REG_SMM_BAR, c);
+	c = pci_read_config8(dev, SB_REG_SMM_BAR + 1);
 	c |= 0xff;
-	pci_write_config8(dev, 0x4d, c);
+	pci_write_config8(dev, SB_REG_SMM_BAR + 1, c);
 
 	/* make sure interupt controller is configured before keyboard init */
 	setup_i8259();
@@ -99,15 +114,13 @@ static void vortex86mx_sb_enable(struct device *dev)
 	regval |= 0x18;
 	pci_write_config8(dev, 0x51, regval);
 
-	/* turn on keyboard */
-	keyboard_on(dev);
-
 	/* enable USB 1.1 & USB 2.0 - redundant really since we've
 	 * already been there - see note above
 	 */
-   	regval = pci_read_config8(dev, 0x50);
-	regval &= ~(0x36);
-	pci_write_config8(dev, 0x50, regval);
+	// USB Init
+
+	/* turn on keyboard */
+	keyboard_on(dev);
 }
 
 struct chip_operations southbridge_dmp_vortex86mx_ops = {

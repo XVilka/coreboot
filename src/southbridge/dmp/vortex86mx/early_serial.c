@@ -1,5 +1,5 @@
 /*
- * Enable the serial evices on the VIA
+ * Enable the serial evices on the DMP Vortex86MX
  */
 
 

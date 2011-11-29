@@ -9,22 +9,13 @@
 
 static void usb_init(struct device *dev)
 {
+	u8 c;
+
 	printk(BIOS_DEBUG, "Configuring DMP Vortex86MX USB 2.0\n");
 
-	/* pci_write_config8(dev, 0x04, 0x07); */
-
-	/*
-	 * To disable; though do we need to do this?
-    		pci_write_config8(dev1, 0x3c, 0x00);
-    		pci_write_config8(dev1, 0x04, 0x00);
-
-	   Also, on the root dev, for enable:
-	   	regval = pci_read_config8(dev0, 0x50);
-		regval &= ~(0x36);
-		pci_write_config8(dev0, 0x50, regval);
-
-		(regval |= 0x36; for disable)
-	 */
+	c = pci_read_config8(dev, 0x0d);
+	c |= 0x20;
+	pci_write_config8(dev, 0x0d, c)
 }
 
 static struct device_operations usb_ops = {
