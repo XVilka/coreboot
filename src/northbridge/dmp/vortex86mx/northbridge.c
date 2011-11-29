@@ -14,50 +14,40 @@
 #include "chip.h"
 #include "northbridge.h"
 
-/*
- * This fixup is based on capturing values from an Award BIOS.  Without
- * this fixup the DMA write performance is awful (i.e. hdparm -t /dev/hda is 20x
- * slower than normal, ethernet drops packets).
- * Apparently these registers govern some sort of bus master behavior.
- */
-
 static void northbridge_init(device_t dev)
 {
 	device_t fb_dev;
 	unsigned long fb;
 	unsigned char c;
 
-	printk(BIOS_DEBUG, "VT8623 random fixup ...\n");
-	pci_write_config8(dev,  0x0d, 0x08);
-	pci_write_config8(dev,  0x70, 0x82);
-	pci_write_config8(dev,  0x71, 0xc8);
-	pci_write_config8(dev,  0x72, 0x00);
-	pci_write_config8(dev,  0x73, 0x01);
-	pci_write_config8(dev,  0x74, 0x01);
-	pci_write_config8(dev,  0x75, 0x08);
-	pci_write_config8(dev,  0x76, 0x52);
-	pci_write_config8(dev,  0x13, 0xd0);
-	pci_write_config8(dev,  0x84, 0x80);
-	pci_write_config16(dev, 0x80, 0x610f);
-	pci_write_config32(dev, 0x88, 0x00000002);
+	printk(BIOS_DEBUG, "Vortex86MX northbridge early init ...\n");
+	
+	c = pci_read_config8(dev, NB_REG_PMCR);
+	c &= ~0xf0;
+	c |= 0x05;
+	pci_write_config8(dev, NB_REG_PMCR, c);
+	pci_write_config8(dev, NB_REG_MAR, 0);
+	c = pci_read_config8(dev, NB_REG_MBR);
+	c &= 0xfc;
+	pci_write_config8(dev, NB_REG_MBR);
+	pci_write_config8(dev, NB_REG_SMM, 0);
+	c = pci_read_config8(dev, NB_REG_SDRAM_MCR);
+	c &= ~0xf9;
+	c |= 0x06;
+	pci_write_config8(dev, NB_REG_SDRAM_MCR, c);
+	pci_write_config8(dev, NB_REG_MRR, 0);
+	c = pci_read_config8(dev, NB_REG_CPU_DCR + 1);
+	c &= ~0xfb;
+	c |= 0x04;
+	pci_write_config8(dev, NB_REG_CPU_DCR + 1, c);
+	c = pci_read_config8(dev, NB_REG_PACR);
+	c &= ~0xfc;
+	c |= 0x01;
+	pci_write_config8(dev, NB_REG_PACR, c);
 
-	fb_dev = dev_find_device(PCI_VENDOR_ID_VIA, 0x3122, 0);
-	if (fb_dev) {
-		/* Fixup GART and framebuffer addresses properly.
-		 * First setup frame buffer properly.
-		 */
-		//fb = pci_read_config32(dev, 0x10);       /* Base addres of framebuffer */
-		fb = 0xd0000000;
-		printk(BIOS_DEBUG, "Frame buffer at %8lx\n",fb);
+	pci_write_config16(dev, NB_REG_SPI_BASE, 0xfc01);
+	pci_write_config32(dev, NB_REG_BUF_SC, 0x83e7cf9f);
 
-		c = pci_read_config8(dev, 0xe1) & 0xf0;  /* size of vga */
-		c |= fb>>28;  /* upper nibble of frame buffer address */
-		c = 0xdd;
-		pci_write_config8(dev, 0xe1, c);
-		c = 0x81;                                /* enable framebuffer */
-		pci_write_config8(dev, 0xe0, c);
-		pci_write_config8(dev, 0xe2, 0x42);      /* 'cos award does */
-	}
 }
 
 static void nullfunc(device_t dev)
