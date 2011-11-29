@@ -19,7 +19,7 @@ chip northbridge/dmp/vortex86mx
 			device pci 10.3 on end # USB 2
 
 			device pci 11.0 on      # Southbridge
-				chip superio/via/vt1211
+				chip superio/winbond/w83627hf
 					device pnp 2e.0 on	# Floppy
 						io 0x60 = 0x3f0
 						irq 0x70 = 6

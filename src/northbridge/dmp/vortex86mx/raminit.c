@@ -28,26 +28,32 @@
 	256 Mb 266Mhz 2 Bank (i.e. double sided)
 	512 Mb 266Mhz 2 Bank (i.e. double sided)
 */
-/* ported and enhanced from assembler level code in coreboot v1 */
 
 #include <spd.h>
 #include <cpu/x86/mtrr.h>
 #include "raminit.h"
-
-
+#include "northbridge.h"
 
 void dimm_read(unsigned long bank,unsigned long x)
 {
 	//unsigned long eax;
 	volatile unsigned long y;
 	//eax =  x;
-	y = * (volatile unsigned long *) (x+ bank) ;
+	y = *(volatile unsigned long *) (x + bank) ;
 
 }
 
+int ram_check_address_0(unsigned long x)
+{
+	return 0;
+}
 
-void
-dumpnorth(device_t north)
+int ram_check_address_1(unsigned long x)
+{
+	return 0;
+}
+
+void dumpnorth(device_t north)
 {
 	uint16_t r, c;
 	for(r = 0; r < 256; r += 16) {
@@ -60,6 +66,7 @@ dumpnorth(device_t north)
 		print_debug("\n");
   }
 }
+
 void print_val(char *str, int val)
 {
 	print_debug(str);
@@ -69,16 +76,73 @@ void print_val(char *str, int val)
 static void ddr_ram_setup(const struct mem_controller *ctrl)
 {
 	device_t north = (device_t) 0;
+	device_t north1 = (device_t) 1;
 	uint8_t b, c, bank;
 	uint16_t i;
 	unsigned long bank_address;
 
-	print_debug("vt8623 init starting\n");
+	print_debug("Vortex86MX RAM init starting...\n");
 	north = pci_locate_device(PCI_ID(0x1106, 0x3123), 0);
 	north = 0;
+	
+	pci_write_config8(north, 0x66, 0xe1);
+	pci_write_config16(north, 0x6c, 0x2451);
+	
+	c = pci_read_config32(north, 0x60); // STRAP register
+	// reading, what type of memory we use
+	c &= 0x3000;
+	if (c == 0) {
+	} else if (c == 0x3000) {
+		// DDR2 Init
+		/* Setup DDRII latency */
+		pci_write_config32(north1, 0xf8, 0x6003c);
+		/* Setup DDRII delays */
+		pci_write_config32(north1, 0xf4, 0x186c3);
+		/* tRC = 21 Clocks
+		 * tWTR = 4 Clocks
+		 * tRTP = 3 Clocks
+		 * tFAW = 20 Clocks
+		 * tRRD = 6 CLocks
+		 * tRAS = 18 Clocks
+		 */
+		// TODO: Split each parameter for delays
+		pci_write_config32(north1, 0xf0, 0x12d472a);
+		/* Set DDRII Timings */
+		// read DDRII Timings from CMOS
+		pci_write_config32(north, 0x74, c);
+		/* Setup DDRII latency */
+		pci_write_config32(north1, 0xf8, 0x6003c);
 
+		/* RAM checks */
+		c = pci_read_config32(north, 0x60);
+		c &= 0x3000;
+		if (c == 0x3000) {
+		} else if (c == 0x2000) {
+		} else if (c == 0) {
+		}
 
-	pci_write_config8(north,0x75,0x08);
+		/* Setup memory bank register */
+		pci_write_config32(north, NB_REG_MBR, 0x2552);
+		c = ram_check_address_0(0x400);
+		if (c == 1) {
+			// RAM Column = 1024
+		} else {
+			c = ram_check_address_0(0x200);
+			if (c == 1) {
+				// RAM Column = 512
+			}
+			else {
+				c = ram_check_address_0(0x100);
+				if (c == 1) {
+					// RAM Column = 256
+				} else {
+					// RAM Column = 128
+					pci_write_config32(north, NB_REG_MBR, 0x2230);
+				}
+			}
+		}
+
+	}
 
 	/* setup cpu */
 	pci_write_config8(north,0x50,0xc8);

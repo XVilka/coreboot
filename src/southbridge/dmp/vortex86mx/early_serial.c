@@ -2,10 +2,7 @@
  * Enable the serial evices on the DMP Vortex86MX
  */
 
-
-/* The base address is 0x15c, 0x2e, depending on config bytes */
-
-#define SIO_BASE 0x3f0
+#define SIO_BASE  0x2e
 #define SIO_DATA  SIO_BASE+1
 
 static void vortex86mx_writepnpaddr(uint8_t val)

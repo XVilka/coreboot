@@ -8,8 +8,6 @@
 #include "chip.h"
 #include "vortex86mx.h"
 
-// TODO: Add FCDC 8051 firmware downloading control
-
 static void keyboard_on(struct device *dev)
 {
 	u8 regval;
@@ -106,18 +104,37 @@ static void vortex86mx_sb_enable(struct device *dev)
 	c |= 0xff;
 	pci_write_config8(dev, SB_REG_SMM_BAR + 1, c);
 
+	/* This is only for Vortex86MX, not for Vortex86SX/DX */
+	c = pci_read_config8(dev, SB_REG_INTUART_CTRL);
+	c |= 0x10;
+	pci_write_config8(dev, SB_REG_INTUART_CTRL, c);
+	c = pci_read_config8(dev, SB_REG_INTUART2_IO + 2);
+	c |= 0x20;
+	pci_write_config8(dev, SB_REG_INTUART2_IO + 2, c);
+	c = pci_read_config8(dev, SB_REG_INTUART3_IO + 2, c);
+	c |= 0x20;
+	pci_write_config8(dev, SB_REG_INTUART3_IO + 2, c);
+	c = pci_read_config8(dev, 0xaa);
+	c |= 0x20;
+	pci_write_config8(dev, 0xaa, c);
+	c = pci_read_config8(dev, 0xae);
+	c |= 0x20;
+	pci_write_config8(dev, 0xae);
+
+	/* FCDC - 8051 Firmware Code Download Control */
+	c = pci_read_config8(dev, 0xc1);
+	c |= 0x4;
+	pci_write_config8(dev, 0xc1);
+	
 	/* make sure interupt controller is configured before keyboard init */
 	setup_i8259();
+
+	// USB Init 
 
 	/* enable RTC and ethernet */
 	regval = pci_read_config8(dev, 0x51);
 	regval |= 0x18;
 	pci_write_config8(dev, 0x51, regval);
-
-	/* enable USB 1.1 & USB 2.0 - redundant really since we've
-	 * already been there - see note above
-	 */
-	// USB Init
 
 	/* turn on keyboard */
 	keyboard_on(dev);

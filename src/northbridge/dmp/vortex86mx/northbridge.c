@@ -64,8 +64,8 @@ static struct device_operations northbridge_operations = {
 
 static const struct pci_driver northbridge_driver __pci_driver = {
 	.ops = &northbridge_operations,
-	.vendor = PCI_VENDOR_ID_VIA,
-	.device = PCI_DEVICE_ID_VIA_8623,
+	.vendor = PCI_VENDOR_ID_DMP,
+	.device = PCI_DEVICE_ID_DMP_VORTEX86_PCI,
 };
 
 static void agp_init(device_t dev)
