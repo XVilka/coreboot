@@ -70,14 +70,8 @@ static const struct pci_driver northbridge_driver __pci_driver = {
 
 static void agp_init(device_t dev)
 {
-	printk(BIOS_DEBUG, "VT8623 AGP random fixup ...\n");
+	printk(BIOS_DEBUG, "DMP Vortex86MX AGP init ...\n");
 
-	pci_write_config8(dev, 0x3e, 0x0c);
-	pci_write_config8(dev, 0x40, 0x83);
-	pci_write_config8(dev, 0x41, 0xc5);
-	pci_write_config8(dev, 0x43, 0x44);
-	pci_write_config8(dev, 0x44, 0x34);
-	pci_write_config8(dev, 0x83, 0x02);
 }
 
 static struct device_operations agp_operations = {
@@ -91,8 +85,8 @@ static struct device_operations agp_operations = {
 
 static const struct pci_driver agp_driver __pci_driver = {
 	.ops = &agp_operations,
-	.vendor = PCI_VENDOR_ID_VIA,
-	.device = PCI_DEVICE_ID_VIA_8633_1,
+	.vendor = PCI_VENDOR_ID_DMP,
+	.device = PCI_DEVICE_ID_DMP_VORTEX86MX_VGA,
 };
 
 #if CONFIG_WRITE_HIGH_TABLES==1
