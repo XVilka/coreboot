@@ -16,10 +16,26 @@
 #include "lib/debug.c"
 #include "southbridge/dmp/vortex86mx/early_serial.c"
 
-static inline int spd_read_byte(unsigned device, unsigned address)
+/* Predefined SPD values, because mainboard doesn't have SPD */
+#include "spd_table.h"
+#include <spd.h>
+
+static int spd_read_byte(unsigned device, unsigned address)
 {
-	return smbus_read_byte(device, address);
+	int i;
+
+	if (device == DIMM0) {
+		for (i=0; i < (ARRAY_SIZE(spd_table)); i++) {
+			if (spd_table[i].address == address) {
+				return spd_table[i].data;
+			}
+		}
+	}
+
+	/* returns 0xFF on any failures */
+	return 0xFF;
 }
+
 
 #include "northbridge/dmp/vortex86mx/raminit.c"
 
