@@ -1,0 +1,4 @@
+config CPU_DMP_VORTEX86MX
+	bool
+	select UDELAY_TSC
+	select MMX

@@ -1,0 +1,17 @@
+if VENDOR_DMP
+
+choice
+	prompt "Mainboard model"
+
+config BOARD_DMP_3300MX
+	bool "3300MX"
+
+endchoice
+
+source "src/mainboard/dmp/3300mx/Kconfig"
+
+config MAINBOARD_VENDOR
+	string
+	default "DMP"
+
+endif # VENDOR_DMP

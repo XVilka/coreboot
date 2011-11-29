@@ -1,0 +1,2 @@
+subdirs-$(CONFIG_NORTHBRIDGE_DMP_VORTEX86MX) += vortex86mx
+
