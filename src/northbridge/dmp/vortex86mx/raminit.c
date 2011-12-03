@@ -34,6 +34,8 @@
 #include "raminit.h"
 #include "northbridge.h"
 
+// TODO: determine wich type of memory we are using, split ram init for each type
+
 void dimm_read(unsigned long bank,unsigned long x)
 {
 	//unsigned long eax;
@@ -73,7 +75,7 @@ void print_val(char *str, int val)
 	print_debug_hex8(val);
 }
 
-static void ddr_ram_setup(const struct mem_controller *ctrl)
+static void ddr2_ram_setup(const struct mem_controller *ctrl)
 {
 	device_t north = (device_t) 0;
 	device_t north1 = (device_t) 1;

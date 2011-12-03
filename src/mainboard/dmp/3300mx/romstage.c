@@ -12,9 +12,9 @@
 #include "cpu/x86/bist.h"
 #include "pc80/udelay_io.c"
 #include "lib/delay.c"
+#include "superio/winbond/w83627hf/early_serial.c"
 #include "cpu/x86/lapic/boot_cpu.c"
 #include "lib/debug.c"
-#include "southbridge/dmp/vortex86mx/early_serial.c"
 
 /* Predefined SPD values, because mainboard doesn't have SPD */
 #include "spd_table.h"
@@ -39,6 +39,8 @@ static int spd_read_byte(unsigned device, unsigned address)
 
 #include "northbridge/dmp/vortex86mx/raminit.c"
 
+#define CONFIG_SERIAL_DEV PNP_DEV(0x2e, W83627HF_SP1)
+
 static void enable_mainboard_devices(void)
 {
 	device_t dev;
@@ -51,18 +53,7 @@ static void enable_mainboard_devices(void)
 	}
 	pci_write_config8(dev, 0x50, 0x80);
 	pci_write_config8(dev, 0x51, 0x1f);
-#if 0
-	// This early setup switches IDE into compatibility mode before PCI gets
-	// a chance to assign I/Os
-	// movl    $CONFIG_ADDR(0, 0x89, 0x42), %eax
-	// //      movb    $0x09, %dl
-	// movb    $0x00, %dl
-	// PCI_WRITE_CONFIG_BYTE
-#endif
-	/* we do this here as in V2, we can not yet do raw operations
-	 * to pci!
-	 */
-        dev += 0x100; /* ICKY */
+    dev += 0x100; /* ICKY */
 
 	pci_write_config8(dev, 0x04, 7);
 	pci_write_config8(dev, 0x40, 3);
@@ -98,10 +89,8 @@ static void main(unsigned long bist)
 	if (dev != PCI_DEV_INVALID)
 		pci_write_config8(dev, 0x15, 0x1c);
 
-	enable_vortex86mx_serial();
+	w83627hf_enable_serial(CONSOLE_SERIAL_DEV, CONFIG_TTYS0_BASE);
 	console_init();
-
-	enable_smbus();
 
 	/* Halt if there was a built in self test failure */
 	report_bist_failure(bist);
